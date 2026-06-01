@@ -17,3 +17,6 @@ RUN --mount=type=secret,id=RHSM_ACTIVATION_KEY \
 
 # Enable mariadb
 RUN systemctl enable mariadb
+
+# CrunchTools: self-heal MariaDB on failure (incl. OOM) via systemd drop-in.
+COPY config/mariadb-restart.conf /etc/systemd/system/mariadb.service.d/restart.conf
