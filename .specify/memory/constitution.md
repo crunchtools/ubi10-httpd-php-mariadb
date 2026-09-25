@@ -1,9 +1,9 @@
 # ubi10-httpd-php-mariadb Constitution
 
-> **Version:** 1.0.0
+> **Version:** 1.0.1
 > **Ratified:** 2026-03-10
 > **Status:** Active
-> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.0.0
+> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.17.0
 > **Profile:** Container Image
 
 UBI 10 PHP + MariaDB leaf image. Inherits Apache httpd, PHP 8.3, php-fpm, and all PHP extensions from ubi10-httpd-php. Adds MariaDB server for WordPress hosting. Requires RHSM for mariadb-server package.
