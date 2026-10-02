@@ -1,66 +1,57 @@
 # ubi10-httpd-php-mariadb Constitution
 
-> **Version:** 1.0.1
+> **Version:** 1.1.0
 > **Ratified:** 2026-03-10
+> **Amended:** 2026-10-02
 > **Status:** Active
-> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.17.0
+> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.18.0
 > **Profile:** Container Image
 
-UBI 10 PHP + MariaDB leaf image. Inherits Apache httpd, PHP 8.3, php-fpm, and all PHP extensions from ubi10-httpd-php. Adds MariaDB server for WordPress hosting. Requires RHSM for mariadb-server package.
+This file holds what is specific to ubi10-httpd-php-mariadb. The fleet rules and the Container
+Image profile (license, versioning, LABELs, the RHSM secret-mount pattern,
+systemd conventions, registry, testing and quality gates) apply at the
+inherited version and are checked against this repo's files by
+`constitution.yml`. They are not restated here.
 
----
+## Purpose
 
-## License
+UBI 10 PHP + MariaDB leaf image for WordPress and MediaWiki hosting.
+Published as `quay.io/crunchtools/ubi10-httpd-php-mariadb`.
 
-AGPL-3.0-or-later
+## Parent Image
 
-## Versioning
+`quay.io/crunchtools/ubi10-httpd-php:latest`. It inherits httpd, PHP 8.3 with
+its extensions, php-fpm with the bounded pool, and everything ubi10-core
+provides.
 
-Follow Semantic Versioning 2.0.0. MAJOR/MINOR/PATCH.
+## RHSM Use
 
-## Base Image
+`mariadb-server` is not in the UBI repos, so this image registers with RHSM
+at build time. Register, install and unregister run in one `RUN` layer, with
+the secrets mounted as `RHSM_ACTIVATION_KEY` and `RHSM_ORG_ID`.
 
-`quay.io/crunchtools/ubi10-httpd-php:latest` — inherits httpd, PHP 8.3 with extensions, php-fpm, troubleshooting tools, and systemd hardening.
+## Packages and Services
 
-## Registry
+- **Packages:** mariadb-server, mariadb.
+- **Enabled:** mariadb, with a `Restart=on-failure` drop-in
+  (`config/mariadb-restart.conf`) so it recovers from an OOM kill. It pairs
+  with the bounded php-fpm pool in the parent.
 
-Published to `quay.io/crunchtools/ubi10-httpd-php-mariadb`.
+## Smoke Test Coverage
 
-## RHSM Registration
-
-Required. `mariadb-server` is not available in UBI repos. Uses `--mount=type=secret` for subscription-manager registration. Register, install, and unregister happen in a single `RUN` layer so secrets are never cached in intermediate layers.
-
-## Containerfile Conventions
-
-- Uses `Containerfile` (not Dockerfile)
-- Required LABELs: `maintainer`, `description`
-- `dnf install -y` followed by `dnf clean all`
-- `subscription-manager unregister` after package installation
-- systemd services enabled: mariadb
-- Inherits from parent chain: httpd, php-fpm (enabled), systemd-remount-fs/systemd-update-done/systemd-udev-trigger (masked)
-- Inherits `STOPSIGNAL SIGRTMIN+3` and `ENTRYPOINT ["/sbin/init"]` from ubi10-core
-
-## Packages Installed
-
-mariadb-server, mariadb
-
-Inherited from ubi10-httpd-php: php, php-mysqlnd, php-xml, php-mbstring, php-intl, php-gd, php-opcache, php-pecl-apcu
-Inherited from ubi10-httpd: httpd
-Inherited from ubi10-core: iputils, bind-utils, net-tools, less, cronie, procps-ng, diffutils
-
-## Testing
-
-- **Build test**: CI builds the image on every push to main/master
-- **Smoke tests**: Service health (httpd, mariadb, php-fpm), MariaDB functional (CREATE DATABASE, CREATE TABLE, INSERT, SELECT, DROP DATABASE), package integrity, inherited package verification
-- **Security scan**: Recommended (not yet implemented)
-
-## Quality Gates
-
-1. Build — CI builds the Containerfile successfully
-2. Test — smoke tests pass (services up, MariaDB CRUD cycle works, packages verified)
-3. Push — image published only after tests pass
-4. Weekly rebuild — cron job picks up base image updates every Monday 4:45 AM UTC
+`tests/smoke-test.sh` asserts httpd, mariadb and php-fpm are active, runs a
+MariaDB CRUD cycle (CREATE DATABASE, CREATE TABLE, INSERT, SELECT, DROP
+DATABASE), and checks the inherited packages.
 
 ## Downstream Consumers
 
-WordPress and MediaWiki sites on lotor (crunchtools.com, educatedconfusion.com, us.crunchtools.com, learn.fatherlinux.com, test.crunchtools.com). Leaf image — no downstream container images.
+The WordPress and MediaWiki site containers. Leaf image: no downstream
+container images and no dispatch.
+
+## History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0.0 | 2026-03-10 | Initial constitution, tier 3a leaf |
+| 1.0.1 | 2026-09-25 | Gatehouse review, triage and pre-commit gates |
+| 1.1.0 | 2026-10-02 | Manifest under constitution v1.18.0: profile restatement removed, image specifics kept |
