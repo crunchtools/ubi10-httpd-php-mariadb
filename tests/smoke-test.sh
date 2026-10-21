@@ -95,6 +95,14 @@ for pkg in "${INHERITED_PACKAGES[@]}"; do
     fi
 done
 
+# PHP must carry the CVE-2026-109618/109619 fix (8.3.36 or later)
+PHP_FPM_VER=$(rpm -q --qf '%{VERSION}' php-fpm 2>/dev/null)
+if [ -n "$PHP_FPM_VER" ] && [ "$(printf '%s\n' 8.3.36 "$PHP_FPM_VER" | sort -V | head -1)" = "8.3.36" ]; then
+    pass "php-fpm $PHP_FPM_VER >= 8.3.36"
+else
+    fail "php-fpm '${PHP_FPM_VER}' is older than 8.3.36 (CVE-2026-109618/109619)"
+fi
+
 # ---------- Inherited (ubi10-core) ----------
 echo "=== Inherited (ubi10-core) ==="
 
