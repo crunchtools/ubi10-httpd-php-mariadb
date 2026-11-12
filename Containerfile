@@ -8,16 +8,18 @@ LABEL description="UBI 10 PHP + MariaDB leaf image for WordPress hosting — req
 # hours before the UBI repos sync (CVE-2026-109618/109619 shipped as 8.3.36 in
 # RHEL on disclosure day while UBI still had 8.3.33).
 RUN --mount=type=secret,id=RHSM_ACTIVATION_KEY \
-    --mount=type=secret,id=RHSM_ORG_ID \
-    subscription-manager register \
-      --activationkey="$(cat /run/secrets/RHSM_ACTIVATION_KEY)" \
-      --org="$(cat /run/secrets/RHSM_ORG_ID)" \
-    && dnf install -y \
-      mariadb-server \
-      mariadb \
-    && dnf upgrade -y 'php*' \
-    && dnf clean all \
-    && subscription-manager unregister
+    --mount=type=secret,id=RHSM_ORG_ID <<'EOF'
+set -euo pipefail
+subscription-manager register \
+    --activationkey="$(cat /run/secrets/RHSM_ACTIVATION_KEY)" \
+    --org="$(cat /run/secrets/RHSM_ORG_ID)"
+trap 'subscription-manager unregister || true; subscription-manager clean || true' EXIT
+dnf install -y \
+    mariadb-server \
+    mariadb
+dnf upgrade -y 'php*'
+dnf clean all
+EOF
 
 # Enable mariadb
 RUN systemctl enable mariadb
